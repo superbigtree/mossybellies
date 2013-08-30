@@ -1,8 +1,2 @@
-# ludum dare #27
-> this game needs a name
-
-todo:
-- implement resources
-- implement points
-- write levels
-- allow game saves with localstorage
+# mossy bellies
+a continuation of my ludum dare #27 game.
