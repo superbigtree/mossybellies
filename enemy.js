@@ -26,7 +26,8 @@ function Enemy(options){
   this.health = options.health || 200;
   this.speed = options.speed || 15;
   this.friction = options.friction || 0.8;
-  this.color = options.color;
+  this.colorMax = 175;
+  this.blockSize = 15;
   
   this.on('update', function(interval){
     self.move();
@@ -34,9 +35,20 @@ function Enemy(options){
     self.boundaries();
   });
 
-  this.on('draw', function(c){
-    c.fillStyle = randomColor();
-    c.fillRect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);  
+  this.on('draw', function(ctx){
+
+    var rows = parseInt(this.size.x/16);
+    var columns = parseInt(this.size.y/16);
+
+    for (var x = 0, i = 0; i < rows; x+=16, i++) {
+      for (var y = 0, j=0; j < columns; y+=16, j++) { 
+        ctx.beginPath();
+        ctx.fillStyle = randomColor(this.colorMax);                
+        ctx.rect(this.position.x - this.camera.position.x + x, this.position.y - this.camera.position.y + y, this.blockSize, this.blockSize);
+        ctx.fill();
+        ctx.closePath();
+      }
+    }   
   });
 }
 
@@ -63,6 +75,10 @@ Enemy.prototype.boundaries = function(){
     this.velocity.y = -10;
   }
 };
+
+Enemy.prototype.blowUp = function(){
+
+}
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;

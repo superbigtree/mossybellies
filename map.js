@@ -18,7 +18,6 @@ Map.prototype.generate = function(ticks){
   var rows = parseInt(this.width/16);
   var columns = parseInt(this.height/16);
 
-  ctx.save();     
   for (var x = 0, i = 0; i < rows; x+=16, i++) {
     for (var y = 0, j=0; j < columns; y+=16, j++) { 
       ctx.beginPath();      
@@ -30,7 +29,6 @@ Map.prototype.generate = function(ticks){
     }
     
   }   
-  ctx.restore();  
   
   // store the generate map as this image texture
   this.image = new Image();

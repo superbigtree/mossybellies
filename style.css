@@ -116,6 +116,7 @@ header .ui .value {
   margin: 20px 0px 0px 0px;
   overflow: scroll;
   height: 75px;
+  width: 300px;
 }
 
 /* tablet size */

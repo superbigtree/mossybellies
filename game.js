@@ -154,24 +154,18 @@ mouse.on('click', function(location){
       for (var i=0; i<monsters.length; i++){
         if (this.touches(monsters[i])){
           this.remove();
-          monsters[i].health -= 10;
-          monsters[i].size.x -= 10;
-          monsters[i].size.y -= 10;
+          monsters[i].health -= 11;
+          monsters[i].size.x -= 9;
+          monsters[i].size.y -= 9;
+          monsters[i].colorMax += 30;
+          monsters[i].blockSize -= .1;
           if (monsters[i].health <= 0){
+            monsters[i].blowUp();
             monsters[i].remove();
-            monsters[i].color = randomColor();
             player.color = '#fff';
             player.eyeColor = '#f00';
-            gold.push(new Gold({
-              name: 'gold',
-              color: '#FFD700',
-              camera: camera,
-              position: {
-                x: monsters[i].position.x,
-                y: game.height - 20
-              }
-            }));
             gold[i].addTo(game);
+            gold[i].position.x = monsters[i].position.x;
           }
         }
       }
@@ -427,6 +421,16 @@ levelOne.on('tick', function(ticks){
     color: '#fe123d'
   }));
   monsters[ticks-1].addTo(game);
+
+  gold.push(new Gold({
+    name: 'gold',
+    color: '#FFD700',
+    camera: camera,
+    position: {
+      x: 0,
+      y: game.height - 30
+    }
+  }));
 });
 
 levelOne.on('update', function(){
