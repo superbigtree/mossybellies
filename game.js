@@ -84,7 +84,7 @@ function tick(){
     ticks++;
 
     game.emit('tick', ticks);
-    map.generate();
+    map.generate(ticks);
     player.tick();
 
     tick();
@@ -262,7 +262,7 @@ player.on('draw', function(context){
 
 player.tick = function(){
   if (this.health > 0){
-    this.setHealth(-1);
+    this.setHealth(5);
   }
 
   if (this.health <= 0){
@@ -422,13 +422,11 @@ levelOne.on('start', function(){
 
 levelOne.on('tick', function(ticks){
   console.log(ticks)
-  if (ticks < 6){
-    monsters.push(new Enemy({
-      camera: camera,
-      color: '#fe123d'
-    }))
-    monsters[ticks-1].addTo(game);
-  }
+  monsters.push(new Enemy({
+    camera: camera,
+    color: '#fe123d'
+  }));
+  monsters[ticks-1].addTo(game);
 });
 
 levelOne.on('update', function(){
@@ -436,7 +434,7 @@ levelOne.on('update', function(){
     if(player.touches(gold[i])){
       log.add('you found gold!');
       gold[i].remove();
-      player.setCoins(25);
+      player.setCoins(5);
     }
   }
 
