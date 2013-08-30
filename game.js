@@ -5,7 +5,7 @@ var Levels = require('crtrdg-scene');
 var Goals = require('crtrdg-goal');
 var randomColor = require('random-color');
 var Inventory = require('./inventory');
-var Item = require('./item');
+var Gold = require('./gold');
 var Player = require('./player');
 var Bullet = require('./bullet');
 var Camera = require('./camera');
@@ -155,12 +155,14 @@ mouse.on('click', function(location){
         if (this.touches(monsters[i])){
           this.remove();
           monsters[i].health -= 10;
+          monsters[i].size.x -= 10;
+          monsters[i].size.y -= 10;
           if (monsters[i].health <= 0){
             monsters[i].remove();
             monsters[i].color = randomColor();
             player.color = '#fff';
             player.eyeColor = '#f00';
-            gold.push(new Item({
+            gold.push(new Gold({
               name: 'gold',
               color: '#FFD700',
               camera: camera,
@@ -190,8 +192,8 @@ var player = new Player({
     y: 55
   },
   position: {
-    x: game.width / 2 - 4,
-    y: game.height / 2 - 6,
+    x: 100,
+    y: 10,
   },
   color: '#fff',
   eyeColor: '#cececa',
@@ -318,7 +320,7 @@ var camera = new Camera({
 
 var menu = levels.create({
   name: 'menu',
-  backgroundColor: '#ffffff'
+  backgroundColor: '#000'
 });
 
 menu.on('start', function(){

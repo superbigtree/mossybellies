@@ -30,7 +30,7 @@ function Enemy(options){
   
   this.on('update', function(interval){
     self.move();
-    this.velocity.y += 1.5;
+    self.velocity.y += 1.5;
     self.boundaries();
   });
 
@@ -61,7 +61,6 @@ Enemy.prototype.boundaries = function(){
   if (this.position.y >= 320 - this.size.y){
     this.position.y = 320 - this.size.y;
     this.velocity.y = -10;
-    this.jumping = false;
   }
 };
 
