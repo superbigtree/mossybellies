@@ -224,7 +224,7 @@ function Enemy(options){
   
   this.on('update', function(interval){
     self.move();
-    this.velocity.y += 1.5;
+    self.velocity.y += 1.5;
     self.boundaries();
   });
 
@@ -255,7 +255,6 @@ Enemy.prototype.boundaries = function(){
   if (this.position.y >= 320 - this.size.y){
     this.position.y = 320 - this.size.y;
     this.velocity.y = -10;
-    this.jumping = false;
   }
 };
 
@@ -270,7 +269,7 @@ var Levels = require('crtrdg-scene');
 var Goals = require('crtrdg-goal');
 var randomColor = require('random-color');
 var Inventory = require('./inventory');
-var Item = require('./item');
+var Gold = require('./gold');
 var Player = require('./player');
 var Bullet = require('./bullet');
 var Camera = require('./camera');
@@ -349,7 +348,7 @@ function tick(){
     ticks++;
 
     game.emit('tick', ticks);
-    map.generate();
+    map.generate(ticks);
     player.tick();
 
     tick();
@@ -420,12 +419,14 @@ mouse.on('click', function(location){
         if (this.touches(monsters[i])){
           this.remove();
           monsters[i].health -= 10;
+          monsters[i].size.x -= 10;
+          monsters[i].size.y -= 10;
           if (monsters[i].health <= 0){
             monsters[i].remove();
             monsters[i].color = randomColor();
             player.color = '#fff';
             player.eyeColor = '#f00';
-            gold.push(new Item({
+            gold.push(new Gold({
               name: 'gold',
               color: '#FFD700',
               camera: camera,
@@ -455,8 +456,8 @@ var player = new Player({
     y: 55
   },
   position: {
-    x: game.width / 2 - 4,
-    y: game.height / 2 - 6,
+    x: 100,
+    y: 10,
   },
   color: '#fff',
   eyeColor: '#cececa',
@@ -525,7 +526,7 @@ player.on('draw', function(context){
 
 player.tick = function(){
   if (this.health > 0){
-    this.setHealth(-1);
+    this.setHealth(5);
   }
 
   if (this.health <= 0){
@@ -583,7 +584,7 @@ var camera = new Camera({
 
 var menu = levels.create({
   name: 'menu',
-  backgroundColor: '#ffffff'
+  backgroundColor: '#000'
 });
 
 menu.on('start', function(){
@@ -685,13 +686,11 @@ levelOne.on('start', function(){
 
 levelOne.on('tick', function(ticks){
   console.log(ticks)
-  if (ticks < 6){
-    monsters.push(new Enemy({
-      camera: camera,
-      color: '#fe123d'
-    }))
-    monsters[ticks-1].addTo(game);
-  }
+  monsters.push(new Enemy({
+    camera: camera,
+    color: '#fe123d'
+  }));
+  monsters[ticks-1].addTo(game);
 });
 
 levelOne.on('update', function(){
@@ -699,7 +698,7 @@ levelOne.on('update', function(){
     if(player.touches(gold[i])){
       log.add('you found gold!');
       gold[i].remove();
-      player.setCoins(25);
+      player.setCoins(5);
     }
   }
 
@@ -758,7 +757,7 @@ var strength = new Text({
 
 var title = new Text({
   el: '#title',
-  html: 'ludum dare #27'
+  html: 'mossy bellies'
 });
 
 var log = new Log({
@@ -766,7 +765,93 @@ var log = new Log({
   width: '300px',
   appendTo: 'header .container'
 });
-},{"./bullet":1,"./camera":2,"./enemy":3,"./inventory":5,"./item":6,"./log":7,"./map":8,"./player":23,"./text":24,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"random-color":22}],5:[function(require,module,exports){
+},{"./bullet":1,"./camera":2,"./enemy":3,"./gold":5,"./inventory":6,"./log":7,"./map":8,"./player":23,"./text":24,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"random-color":22}],5:[function(require,module,exports){
+var inherits = require('inherits');
+var Entity = require('crtrdg-entity');
+
+module.exports = Gold;
+inherits(Gold, Entity);
+
+function Gold(options){
+  var self = this;
+
+  this.name = options.name;
+
+  this.position = {
+    x: options.position.x,
+    y: options.position.y
+  };
+
+  this.size = {
+    x: 20,
+    y: 20
+  };
+
+  this.velocity = {
+    x: 0,
+    y: 0
+  };
+
+  this.color = options.color;
+  this.camera = options.camera;
+  this.growing = true;
+
+  this.on('update', function(){
+    self.move();
+    self.velocity.y += .8;
+    self.growAndShrink(); 
+    self.boundaries();
+  })
+
+  this.on('draw', function(c){
+    c.fillStyle = this.color;
+    c.fillRect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);  
+  });
+}
+
+Gold.prototype.move = function(){
+  this.position.x += this.velocity.x * 0.1;
+  this.position.y += this.velocity.y * 0.1;
+};
+
+Gold.prototype.growAndShrink = function(){
+  if (this.growing){
+    this.position.x -= .1;
+    this.size.x += .2;
+    this.size.y += .1;
+    if (this.size.x >= 22){
+      this.growing = false;
+    }
+  } else {
+    this.position.x += .1;
+    this.size.x -= .2;
+    this.size.y -= .1;
+    if (this.size.x <= 18){
+      this.growing = true;
+    }
+  }
+}
+
+Gold.prototype.boundaries = function(){
+  if (this.position.x <= 0){
+    this.velocity.x *= -1;
+  }
+
+  if (this.position.x >= 3000 - this.size.x){
+    this.velocity.x *= -1;
+  }
+
+  if (this.position.y <= 0){
+    this.position.y = 0;
+  }
+
+  if (this.position.y >= 320 - this.size.y){
+    this.position.y = 320 - this.size.y;
+    this.velocity.y = -10;
+    this.jumping = false;
+  }
+};
+},{"crtrdg-entity":11,"inherits":21}],6:[function(require,module,exports){
 var inherits = require('inherits');
 
 module.exports = Inventory;
@@ -883,35 +968,7 @@ Inventory.prototype.isEmpty = function isEmpty(){
   }
   return true;
 };
-},{"inherits":21}],6:[function(require,module,exports){
-var inherits = require('inherits');
-var Entity = require('crtrdg-entity');
-
-module.exports = Item;
-inherits(Item, Entity);
-
-function Item(options){
-  this.name = options.name;
-
-  this.position = {
-    x: options.position.x,
-    y: options.position.y
-  };
-
-  this.size = {
-    x: 20,
-    y: 20
-  };
-
-  this.color = options.color;
-  this.camera = options.camera;
-
-  this.on('draw', function(c){
-    c.fillStyle = randomColor();
-    c.fillRect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);  
-  });
-}
-},{"crtrdg-entity":11,"inherits":21}],7:[function(require,module,exports){
+},{"inherits":21}],7:[function(require,module,exports){
 module.exports = Log;
 
 function Log(options){
@@ -959,21 +1016,22 @@ function Map(game, width, height){
   this.image = null;
 }
 
-Map.prototype.generate = function(callback){
+Map.prototype.generate = function(ticks){
   var ctx = document.createElement('canvas').getContext('2d');
 
   ctx.canvas.width = this.width;
   ctx.canvas.height = this.height;
 
-  var rows = parseInt(this.width/16+1);
-  var columns = parseInt(this.height/16+1);
+  var rows = parseInt(this.width/16);
+  var columns = parseInt(this.height/16);
 
   ctx.save();     
   for (var x = 0, i = 0; i < rows; x+=16, i++) {
     for (var y = 0, j=0; j < columns; y+=16, j++) { 
       ctx.beginPath();      
       ctx.fillStyle = randomColor(155);                
-      ctx.rect(x, y, 15, 15);        
+      ctx.rect(x, y, 15, 15);
+      ctx.translate(.1 * ticks * 0.1, .1 * ticks * 0.1);  
       ctx.fill();
       ctx.closePath();
     }
