@@ -495,7 +495,7 @@ var strength = new Text({
 
 var title = new Text({
   el: '#title',
-  html: 'ludum dare #27'
+  html: 'mossy bellies'
 });
 
 var log = new Log({
