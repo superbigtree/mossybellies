@@ -220,7 +220,8 @@ function Enemy(options){
   this.health = options.health || 200;
   this.speed = options.speed || 15;
   this.friction = options.friction || 0.8;
-  this.color = options.color;
+  this.colorMax = 175;
+  this.blockSize = 15;
   
   this.on('update', function(interval){
     self.move();
@@ -228,9 +229,20 @@ function Enemy(options){
     self.boundaries();
   });
 
-  this.on('draw', function(c){
-    c.fillStyle = randomColor();
-    c.fillRect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);  
+  this.on('draw', function(ctx){
+
+    var rows = parseInt(this.size.x/16);
+    var columns = parseInt(this.size.y/16);
+
+    for (var x = 0, i = 0; i < rows; x+=16, i++) {
+      for (var y = 0, j=0; j < columns; y+=16, j++) { 
+        ctx.beginPath();
+        ctx.fillStyle = randomColor(this.colorMax);                
+        ctx.rect(this.position.x - this.camera.position.x + x, this.position.y - this.camera.position.y + y, this.blockSize, this.blockSize);
+        ctx.fill();
+        ctx.closePath();
+      }
+    }   
   });
 }
 
@@ -257,6 +269,10 @@ Enemy.prototype.boundaries = function(){
     this.velocity.y = -10;
   }
 };
+
+Enemy.prototype.blowUp = function(){
+
+}
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -418,24 +434,18 @@ mouse.on('click', function(location){
       for (var i=0; i<monsters.length; i++){
         if (this.touches(monsters[i])){
           this.remove();
-          monsters[i].health -= 10;
-          monsters[i].size.x -= 10;
-          monsters[i].size.y -= 10;
+          monsters[i].health -= 11;
+          monsters[i].size.x -= 9;
+          monsters[i].size.y -= 9;
+          monsters[i].colorMax += 30;
+          monsters[i].blockSize -= .1;
           if (monsters[i].health <= 0){
+            monsters[i].blowUp();
             monsters[i].remove();
-            monsters[i].color = randomColor();
             player.color = '#fff';
             player.eyeColor = '#f00';
-            gold.push(new Gold({
-              name: 'gold',
-              color: '#FFD700',
-              camera: camera,
-              position: {
-                x: monsters[i].position.x,
-                y: game.height - 20
-              }
-            }));
             gold[i].addTo(game);
+            gold[i].position.x = monsters[i].position.x;
           }
         }
       }
@@ -691,6 +701,16 @@ levelOne.on('tick', function(ticks){
     color: '#fe123d'
   }));
   monsters[ticks-1].addTo(game);
+
+  gold.push(new Gold({
+    name: 'gold',
+    color: '#FFD700',
+    camera: camera,
+    position: {
+      x: 0,
+      y: game.height - 30
+    }
+  }));
 });
 
 levelOne.on('update', function(){
@@ -1025,7 +1045,6 @@ Map.prototype.generate = function(ticks){
   var rows = parseInt(this.width/16);
   var columns = parseInt(this.height/16);
 
-  ctx.save();     
   for (var x = 0, i = 0; i < rows; x+=16, i++) {
     for (var y = 0, j=0; j < columns; y+=16, j++) { 
       ctx.beginPath();      
@@ -1037,7 +1056,6 @@ Map.prototype.generate = function(ticks){
     }
     
   }   
-  ctx.restore();  
   
   // store the generate map as this image texture
   this.image = new Image();
