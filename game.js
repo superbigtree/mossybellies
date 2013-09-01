@@ -1,9 +1,11 @@
+var randomColor = require('random-color');
+
 var Game = require('crtrdg-gameloop');
 var Keyboard = require('crtrdg-keyboard');
 var Mouse = require('crtrdg-mouse');
 var Levels = require('crtrdg-scene');
 var Goals = require('crtrdg-goal');
-var randomColor = require('random-color');
+
 var Inventory = require('./inventory');
 var Gold = require('./gold');
 var Player = require('./player');
@@ -49,9 +51,13 @@ game.on('draw', function(context){
   map.draw(context, camera.position.x, camera.position.y)
 });
 
-game.on('pause', function(){});
+game.on('pause', function(){
+  game.paused = true;
+});
 
-game.on('resume', function(){});
+game.on('resume', function(){
+  game.paused = false;
+});
 
 game.on('tick', function(ticks){
   game.currentScene.emit('tick', ticks);
@@ -81,11 +87,14 @@ var ticks = 0;
 var tickStarted = false;
 function tick(){
    setTimeout(function(){
-    ticks++;
 
-    game.emit('tick', ticks);
-    map.generate(ticks);
-    player.tick();
+    if (!game.paused){
+      ticks++;
+
+      game.emit('tick', ticks);
+      map.generate(ticks);
+      player.tick();
+    }
 
     tick();
 
@@ -112,7 +121,7 @@ keyboard.on('keydown', function(key){
   if (key === '<space>'){
     if (game.currentScene.name === 'menu'){
       levels.set(levelOne);
-      game.resume();      
+      //game.resume();      
     }
 
     if (game.currentScene.name === 'game over'){
@@ -320,11 +329,14 @@ var menu = levels.create({
 menu.on('start', function(){
   console.log('menu screen')
   player.visible = false;
-  game.pause();
+  setTimeout(function(){
+    game.pause();
+  }, 500);
 });
 
 // set main menu as first screen
 levels.set(menu);
+
 
 
 /*
@@ -340,7 +352,7 @@ var gameOver = levels.create({
 
 gameOver.on('start', function(){
   player.visible = false;
-  title.update('GAME OVER');
+  title.update('GAME OVER YOU LOST SO BAD TRY AGAIN!');
   game.pause();
 });
 
@@ -357,7 +369,7 @@ var gameWin = levels.create({
 });
 
 gameWin.on('start', function(){
-  title.update('YOU WIN');
+  title.update("YOU WIN YOU ARE SO GREAT HEY IF YOU DIDN'T FIND IT THERE'S A SECRET FLYING ABILITY!");
   game.pause();
 });
 
@@ -409,7 +421,10 @@ levelOne.on('start', function(){
     tick();
     tickStarted = true;
   }
-  //enemy.addTo(game);
+
+  game.resume();
+  title.update('shoot monsters and collect gold!')
+  player.position.y = 20;
   player.visible = true;
   goals.set(levelOne.goal);
 });
@@ -496,8 +511,8 @@ var strength = new Text({
 */
 
 var title = new Text({
-  el: '#title',
-  html: 'mossy bellies'
+  el: '#game-title',
+  html: 'press space to play!'
 });
 
 var log = new Log({
