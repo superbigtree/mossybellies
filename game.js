@@ -10,6 +10,7 @@ var Inventory = require('./inventory');
 var Gold = require('./gold');
 var Player = require('./player');
 var Bullet = require('./bullet');
+var Shield = require('./shield');
 var Camera = require('./camera');
 var Enemy = require('./enemy');
 var Map = require('./map');
@@ -147,41 +148,52 @@ keyboard.on('keyup', function(key){
 var mouse = new Mouse(game);
 
 mouse.on('click', function(location){
-  new Bullet({
-    position: { 
-      x: player.position.x + player.size.x / 2, 
-      y: player.position.y + player.size.y / 2
-    },
 
-    target: { 
-      x: location.x + camera.position.x, 
-      y: location.y + camera.position.y 
-    },
-    camera: camera
-  }).addTo(game)
-    .on('update', function(interval){
-      for (var i=0; i<monsters.length; i++){
-        if (this.touches(monsters[i])){
-          this.remove();
-          monsters[i].health -= 11;
-          monsters[i].size.x -= 9;
-          monsters[i].size.y -= 9;
-          monsters[i].colorMax += 30;
-          monsters[i].blockSize -= .1;
-          if (monsters[i].health <= 0){
-            monsters[i].blowUp();
-            monsters[i].remove();
-            player.color = '#fff';
-            player.eyeColor = '#f00';
-            gold[i].addTo(game);
-            gold[i].position.x = monsters[i].position.x;
-          }
-        }
-      }
-    }
-  );
+  if (player.scrunched){
+    new Shield({
+      position: { 
+        x: player.position.x, 
+        y: player.position.y - 5
+      },
+      camera: camera,
+      player: player
+    }).addTo(game);
+  } else {
+    new Bullet({
+      position: { 
+        x: player.position.x + player.size.x / 2, 
+        y: player.position.y + player.size.y / 2
+      },
+
+      target: { 
+        x: location.x + camera.position.x, 
+        y: location.y + camera.position.y 
+      },
+      camera: camera
+    }).addTo(game).on('update', bulletCheck);
+  }
 });
 
+function bulletCheck(interval){
+  for (var i=0; i<monsters.length; i++){
+    if (this.touches(monsters[i])){
+      this.remove();
+      monsters[i].health -= 11;
+      monsters[i].size.x -= 9;
+      monsters[i].size.y -= 9;
+      monsters[i].colorMax += 30;
+      monsters[i].blockSize -= .1;
+      if (monsters[i].health <= 0){
+        monsters[i].blowUp();
+        monsters[i].remove();
+        player.color = '#fff';
+        player.eyeColor = '#f00';
+        gold[i].addTo(game);
+        gold[i].position.x = monsters[i].position.x;
+      }
+    }
+  }
+}
 
 /*
 *
@@ -459,9 +471,11 @@ levelOne.on('update', function(){
 
   for (var i=0; i<monsters.length; i++){
     if(player.touches(monsters[i])){
-      player.setHealth(-1);
-      player.color = '#f00'
-      player.eyeColor = '#fff'
+      if(!player.defending){
+        player.setHealth(-1);
+        player.color = '#f00'
+        player.eyeColor = '#fff'
+      }
     }
   }
 });

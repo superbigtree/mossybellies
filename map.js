@@ -1,4 +1,4 @@
-randomColor = require('random-color');
+var randomColor = require('random-color');
 
 module.exports = Map;
 

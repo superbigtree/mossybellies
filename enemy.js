@@ -1,5 +1,6 @@
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
+var randomColor = require('random-color');
 
 module.exports = Enemy;
 inherits(Enemy, Entity);
