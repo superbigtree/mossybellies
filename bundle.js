@@ -194,6 +194,7 @@ Rectangle.prototype.overlaps = function(r) {
 },{}],3:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
+var randomColor = require('random-color');
 
 module.exports = Enemy;
 inherits(Enemy, Entity);
@@ -277,7 +278,7 @@ Enemy.prototype.blowUp = function(){
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-},{"crtrdg-entity":11,"inherits":21}],4:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":21,"random-color":22}],4:[function(require,module,exports){
 var randomColor = require('random-color');
 
 var Game = require('crtrdg-gameloop');
@@ -290,6 +291,7 @@ var Inventory = require('./inventory');
 var Gold = require('./gold');
 var Player = require('./player');
 var Bullet = require('./bullet');
+var Shield = require('./shield');
 var Camera = require('./camera');
 var Enemy = require('./enemy');
 var Map = require('./map');
@@ -427,41 +429,52 @@ keyboard.on('keyup', function(key){
 var mouse = new Mouse(game);
 
 mouse.on('click', function(location){
-  new Bullet({
-    position: { 
-      x: player.position.x + player.size.x / 2, 
-      y: player.position.y + player.size.y / 2
-    },
 
-    target: { 
-      x: location.x + camera.position.x, 
-      y: location.y + camera.position.y 
-    },
-    camera: camera
-  }).addTo(game)
-    .on('update', function(interval){
-      for (var i=0; i<monsters.length; i++){
-        if (this.touches(monsters[i])){
-          this.remove();
-          monsters[i].health -= 11;
-          monsters[i].size.x -= 9;
-          monsters[i].size.y -= 9;
-          monsters[i].colorMax += 30;
-          monsters[i].blockSize -= .1;
-          if (monsters[i].health <= 0){
-            monsters[i].blowUp();
-            monsters[i].remove();
-            player.color = '#fff';
-            player.eyeColor = '#f00';
-            gold[i].addTo(game);
-            gold[i].position.x = monsters[i].position.x;
-          }
-        }
-      }
-    }
-  );
+  if (player.scrunched){
+    new Shield({
+      position: { 
+        x: player.position.x, 
+        y: player.position.y - 5
+      },
+      camera: camera,
+      player: player
+    }).addTo(game);
+  } else {
+    new Bullet({
+      position: { 
+        x: player.position.x + player.size.x / 2, 
+        y: player.position.y + player.size.y / 2
+      },
+
+      target: { 
+        x: location.x + camera.position.x, 
+        y: location.y + camera.position.y 
+      },
+      camera: camera
+    }).addTo(game).on('update', bulletCheck);
+  }
 });
 
+function bulletCheck(interval){
+  for (var i=0; i<monsters.length; i++){
+    if (this.touches(monsters[i])){
+      this.remove();
+      monsters[i].health -= 11;
+      monsters[i].size.x -= 9;
+      monsters[i].size.y -= 9;
+      monsters[i].colorMax += 30;
+      monsters[i].blockSize -= .1;
+      if (monsters[i].health <= 0){
+        monsters[i].blowUp();
+        monsters[i].remove();
+        player.color = '#fff';
+        player.eyeColor = '#f00';
+        gold[i].addTo(game);
+        gold[i].position.x = monsters[i].position.x;
+      }
+    }
+  }
+}
 
 /*
 *
@@ -739,9 +752,11 @@ levelOne.on('update', function(){
 
   for (var i=0; i<monsters.length; i++){
     if(player.touches(monsters[i])){
-      player.setHealth(-1);
-      player.color = '#f00'
-      player.eyeColor = '#fff'
+      if(!player.defending){
+        player.setHealth(-1);
+        player.color = '#f00'
+        player.eyeColor = '#fff'
+      }
     }
   }
 });
@@ -800,7 +815,7 @@ var log = new Log({
   width: '300px',
   appendTo: 'header .container'
 });
-},{"./bullet":1,"./camera":2,"./enemy":3,"./gold":5,"./inventory":6,"./log":7,"./map":8,"./player":23,"./text":24,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"random-color":22}],5:[function(require,module,exports){
+},{"./bullet":1,"./camera":2,"./enemy":3,"./gold":5,"./inventory":6,"./log":7,"./map":8,"./player":24,"./shield":25,"./text":26,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"random-color":22}],5:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 
@@ -1040,7 +1055,7 @@ Log.prototype.clear = function(){
   this.el.innerHTML = '';
 };
 },{}],8:[function(require,module,exports){
-randomColor = require('random-color');
+var randomColor = require('random-color');
 
 module.exports = Map;
 
@@ -5121,6 +5136,53 @@ function color(cap){
 }
 
 },{}],23:[function(require,module,exports){
+/*
+ * tic
+ * https://github.com/shama/tic
+ *
+ * Copyright (c) 2013 Kyle Robinson Young
+ * Licensed under the MIT license.
+ */
+
+function Tic() { this._things = []; }
+module.exports = function() { return new Tic(); };
+
+Tic.prototype._stack = function(thing) {
+  var self = this;
+  self._things.push(thing);
+  var i = self._things.length - 1;
+  return function() { delete self._things[i]; }
+};
+
+Tic.prototype.interval = Tic.prototype.setInterval = function(fn, at) {
+  return this._stack({
+    fn: fn, at: at, args: Array.prototype.slice.call(arguments, 2),
+    elapsed: 0, once: false
+  });
+};
+
+Tic.prototype.timeout = Tic.prototype.setTimeout = function(fn, at) {
+  return this._stack({
+    fn: fn, at: at, args: Array.prototype.slice.call(arguments, 2),
+    elapsed: 0, once: true
+  });
+};
+
+Tic.prototype.tick = function(dt) {
+  var self = this;
+  self._things.forEach(function(thing, i) {
+    thing.elapsed += dt;
+    if (thing.elapsed > thing.at) {
+      thing.elapsed -= thing.at;
+      thing.fn.apply(thing.fn, thing.args || []);
+      if (thing.once) {
+        delete self._things[i];
+      }
+    }
+  });
+};
+
+},{}],24:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 
@@ -5228,7 +5290,94 @@ Player.prototype.input = function(keysdown){
     this.scrunched = true;
   }
 };
-},{"crtrdg-entity":11,"inherits":21}],24:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":21}],25:[function(require,module,exports){
+var inherits = require('inherits');
+var Entity = require('crtrdg-entity');
+var randomColor = require('random-color');
+var tic = require('tic')();
+
+module.exports = Shield;
+inherits(Shield, Entity);
+
+function Shield(options){
+  var self = this;
+  this.size = {
+    x: 65,
+    y: 30
+  };
+
+  this.position = { 
+    x: options.position.x, 
+    y: options.position.y 
+  };
+
+  this.velocity = {
+    x: 0,
+    y: 5
+  }
+
+  this.camera = options.camera;
+  this.player = options.player;
+
+  this.friction = .5;
+  this.color = randomColor(255);
+
+  this.on('update', function(interval){
+    this.position.x += this.velocity.x + randomInt(-3, 3) * this.friction;
+    this.position.y += this.velocity.y + randomInt(-3, 3) * this.friction;
+    this.boundaries();
+
+    if (this.touches(this.player) && this.player.scrunched){
+      this.player.defending = true;
+    } else {
+      this.player.defending = false;
+    }
+
+    tic.timeout(function() {
+      self.remove()
+    }, 3000);
+
+    tic.tick(interval);
+  });
+
+  this.on('draw', function(context){
+    context.beginPath();
+    context.rect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);
+    context.strokeStyle = this.color;
+    context.stroke();
+  });
+
+  return this;
+}
+
+Shield.prototype.boundaries = function(){
+  if (this.position.x <= 0){
+    this.position.x = 0;
+  }
+
+  if (this.position.x >= 3000 - this.size.x){
+    this.position.x = 3000 - this.size.x;
+  }
+
+  if (this.position.y <= 150){
+    this.remove();
+  }
+
+  if (this.position.y <= 250){
+    this.velocity.y *= -1;
+  }
+
+  if (this.position.y >= 320 - this.size.y){
+    this.velocity.y *= -1;
+  }
+};
+
+function randomInt(min, max){
+  var num = Math.random() * (max - min) + min;
+
+  return Math.floor(num)
+}
+},{"crtrdg-entity":11,"inherits":21,"random-color":22,"tic":23}],26:[function(require,module,exports){
 /* 
 *
 * TEXT UTILITIES
