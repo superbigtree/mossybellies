@@ -14,7 +14,7 @@ function Shield(options){
   };
 
   this.position = { 
-    x: options.position.x, 
+    x: options.position.x - 12, 
     y: options.position.y 
   };
 
@@ -30,6 +30,8 @@ function Shield(options){
   this.color = randomColor(255);
 
   this.on('update', function(interval){
+    this.size.x += randomInt(-3, 5);
+    this.size.y += randomInt(-3, 5);
     this.position.x += this.velocity.x + randomInt(-3, 3) * this.friction;
     this.position.y += this.velocity.y + randomInt(-3, 3) * this.friction;
     this.boundaries();
@@ -50,6 +52,7 @@ function Shield(options){
   this.on('draw', function(context){
     context.beginPath();
     context.rect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);
+    context.lineWidth = randomInt(1, 5);
     context.strokeStyle = this.color;
     context.stroke();
   });
