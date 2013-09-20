@@ -36,7 +36,7 @@ function Shield(options){
     this.position.y += this.velocity.y + randomInt(-3, 3) * this.friction;
     this.boundaries();
 
-    if (this.touches(this.player) && this.player.scrunched){
+    if (this.touches(this.player) && this.player.ducking){
       this.player.defending = true;
     } else {
       this.player.defending = false;

@@ -1,4 +1,6 @@
+var elementClass = require('element-class');
 var randomColor = require('random-color');
+var tic = require('tic')();
 
 var Game = require('crtrdg-gameloop');
 var Keyboard = require('crtrdg-keyboard');
@@ -45,6 +47,7 @@ game.win = function(){
 */
 
 game.on('update', function(interval){
+  tic.tick(interval);
   camera.update();
 });
 
@@ -62,6 +65,7 @@ game.on('resume', function(){
 
 game.on('tick', function(ticks){
   game.currentScene.emit('tick', ticks);
+  console.log(player)
 });
 
 
@@ -87,8 +91,7 @@ var levels = new Levels(game);
 var ticks = 0;
 var tickStarted = false;
 function tick(){
-   setTimeout(function(){
-
+  tic.timeout(function() {
     if (!game.paused){
       ticks++;
 
@@ -97,11 +100,9 @@ function tick(){
       player.tick();
     }
 
-    tick();
-
+    tick();  
   }, 10000);
 }
-
 
 /*
 *
@@ -114,7 +115,7 @@ var keysdown = keyboard.keysdown;
 
 keyboard.on('keydown', function(key){
   if (key === 'S'){
-    if (!player.scrunched){
+    if (!player.ducking){
       player.velocity.y = -5;
     }
   }
@@ -133,7 +134,7 @@ keyboard.on('keydown', function(key){
 
 keyboard.on('keyup', function(key){
   if (key === 'S'){
-    player.scrunched = false;
+    player.ducking = false;
     player.velocity.y = -5;
   }
 });
@@ -149,7 +150,7 @@ var mouse = new Mouse(game);
 
 mouse.on('click', function(location){
 
-  if (player.scrunched){
+  if (player.ducking){
     new Shield({
       position: { 
         x: player.position.x, 
@@ -188,8 +189,8 @@ function bulletCheck(interval){
         monsters[i].remove();
         player.color = '#fff';
         player.eyeColor = '#f00';
-        gold[i].addTo(game);
-        gold[i].position.x = monsters[i].position.x;
+        golds[i].addTo(game);
+        golds[i].position.x = monsters[i].position.x;
       }
     }
   }
@@ -216,7 +217,7 @@ var player = new Player({
   friction: 0.9,
   health: 100,
   camera: camera,
-  coins: 0
+  gold: 0
 });
 
 player.addTo(game);
@@ -226,7 +227,7 @@ player.on('update', function(interval){
     player.kill();
   }
 
-  if (player.coins >= 100){
+  if (player.gold >= 100){
     game.win();
   }
 
@@ -244,7 +245,7 @@ player.on('draw', function(context){
     /* the body */
     context.fillStyle = this.color;
 
-    if(this.scrunched){
+    if(this.ducking){
       context.fillRect(this.position.x - camera.position.x-10, this.position.y - camera.position.y+30, this.size.x+20, this.size.y-30);
 
       /* the eye */
@@ -294,9 +295,9 @@ player.setHealth = function(n){
   health.update(this.health);
 }
 
-player.setCoins = function(n){
-  this.coins += n;
-  coins.update(this.coins);
+player.setgold = function(n){
+  this.gold += n;
+  gold.update(this.gold);
 }
 
 player.setStrength = function(n){
@@ -408,7 +409,7 @@ pauseMenu.on('start', function(){
 *
 */
 
-var gold = [];
+var golds = [];
 var monsters = [];
 
 var levelOne = levels.create({
@@ -449,7 +450,7 @@ levelOne.on('tick', function(ticks){
   }));
   monsters[ticks-1].addTo(game);
 
-  gold.push(new Gold({
+  golds.push(new Gold({
     name: 'gold',
     color: '#FFD700',
     camera: camera,
@@ -461,11 +462,11 @@ levelOne.on('tick', function(ticks){
 });
 
 levelOne.on('update', function(){
-  for (var i=0; i<gold.length; i++){
-    if(player.touches(gold[i])){
+  for (var i=0; i<golds.length; i++){
+    if(player.touches(golds[i])){
       log.add('you found gold!');
-      gold[i].remove();
-      player.setCoins(5);
+      golds[i].remove();
+      player.setgold(5);
     }
   }
 
@@ -512,10 +513,26 @@ var health = new Text({
   html: player.health
 });
 
-var coins = new Text({ 
-  el: '#coins', 
+var gold = new Text({ 
+  el: '#gold', 
   html: '0'
 });
+
+var potatoes = new Text({
+  el: '#potatoes',
+  html: player.potatoes
+});
+
+function buyPotato(){
+  if (player.gold >= 5){
+    player.potatoes += 1;
+    player.gold -= 5;
+    potatoes.update(player.potatoes);
+    gold.update(player.gold);
+  } else {
+    log.add('hey bud: you need more gold to buy a potato. can you handle that?')
+  }
+}
 
 /*
 var strength = new Text({
@@ -523,6 +540,24 @@ var strength = new Text({
   html: player.strength
 });
 */
+
+var buy = document.querySelector('#buy');
+
+var store = document.querySelector('#store');
+
+buy.addEventListener('click', function(e){
+  if (elementClass(store).has('hide')){
+    elementClass(store).remove('hide');
+  } else {
+    elementClass(store).add('hide');
+  }
+}, false);
+
+var potato = document.querySelector('#potato');
+
+potato.addEventListener('click', function(e){
+  buyPotato();
+}, false)
 
 var title = new Text({
   el: '#game-title',

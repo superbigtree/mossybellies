@@ -10,9 +10,41 @@
   
 <header>
   <div class="container">
-    <div class="health ui wrapper"><span class="label">health:</span> <span id="health" class="value"></span></div>
-    <div class="coins ui wrapper"><span class="label">gold:</span> <span id="coins" class="value"></span></div>
-    <!--<div class="strength ui wrapper"><span class="label">strength:</span> <span id="strength" class="value"></span></div>-->
+
+    <div id="store-wrapper">
+      <div id="buy">buy items</a></div>
+
+      <div id="store" class="hide">
+        <ul>
+          <li id="potato">potato</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="stats">
+      <div class="health ui wrapper">
+        <span class="label">health:</span> 
+        <span id="health" class="value"></span>
+      </div>
+
+      <div class="gold ui wrapper">
+        <span class="label">gold:</span> 
+        <span id="gold" class="value"></span>
+      </div>
+
+      <!--
+      <div class="strength ui wrapper">
+        <span class="label">strength:</span> 
+        <span id="strength" class="value"></span>
+      </div>
+      -->
+
+      <div class="potato ui wrapper">
+        <span class="label">potatoes:</span> 
+        <span id="potatoes" class="value"></span>
+      </div>
+    </div>
+
   </div>
 </header>
 
@@ -22,9 +54,12 @@
 
 <footer>
   <div class="container">
-    <p>press the space bar to play. wasd keys. aim/shoot with the mouse. get 100 gold to win. <a href="https://github.com/sethvincent/ludum-dare-27">code on github</a>.</p>
+    <p>
+      press the space bar to play. wasd keys. aim/shoot with the mouse. get 100 gold to win. 
+      <a href="https://github.com/sethvincent/ludum-dare-27">code on github</a>.
+    </p>
     <h2 id="game-title" class="ui"></h2>
-<span class="label">  </div>
+  </div>
 </footer>
 
 <script src="./bundle.js"></script>

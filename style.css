@@ -96,6 +96,8 @@ canvas#game {
 
 header .ui {
   margin-bottom: 5px;
+  float: left;
+  clear: both;
 }
 
 header .ui .label {
@@ -111,12 +113,50 @@ header .ui .value {
   color: #6e6e6a;
 }
 
+#stats {
+  float: left;
+}
+
 #log {
   padding: 0px;
   margin: 20px 0px 0px 0px;
   overflow: scroll;
   height: 75px;
   width: 300px;
+  clear: both;
+}
+
+.faded {
+  color: #999;
+}
+
+#store-wrapper {
+  float: right;
+}
+
+#buy {
+  cursor: pointer;
+}
+
+#store {
+  position: fixed;
+  z-index: 10000;
+  background-color: #fff;
+  padding: 10px 0px;
+}
+
+#store ul {
+  padding: 0px;
+  margin: 0px;
+}
+
+#store li {
+  list-style-type: none;
+  cursor: pointer;
+}
+
+.hide {
+  display: none;
 }
 
 /* tablet size */
@@ -126,12 +166,14 @@ header .ui .value {
     padding: 0px 20px;
   }
 }
+
 /* desktop size */
 @media only screen and (min-width: 960px) {
   .container {
     width: 800px;
   }
 }
+
 /* clearfix */
 .container:after {
   content: " ";

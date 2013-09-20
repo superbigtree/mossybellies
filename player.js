@@ -2,9 +2,10 @@ var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 
 module.exports = Player;
-inherits(Player, Entity);
 
 function Player(options){
+  Entity.call(this);
+
   this.position = { 
     x: options.position.x, 
     y: options.position.y 
@@ -23,16 +24,19 @@ function Player(options){
   this.camera = options.camera;
 
   this.health = options.health;
-  this.coins = 0;
+  this.gold = 0;
+  this.potatoes = 0;
   this.strength = 5;
+  
   this.direction = 'right';
-  this.scrunched = false;
+  this.ducking = false;
   
   this.friction = options.friction;
   this.speed = options.speed;
   this.color = options.color;
   this.eyeColor = options.eyeColor;
 }
+inherits(Player, Entity);
 
 Player.prototype.move = function(){
   this.position.x += this.velocity.x * this.friction;
@@ -59,16 +63,15 @@ Player.prototype.boundaries = function(){
 };
 
 Player.prototype.input = function(keysdown){
-
   if ('A' in keysdown){
     this.direction = 'left';
     this.velocity.x = -this.speed;
     if (!this.jumping){
       this.jumping = true;
       if ('W' in keysdown){
-        this.velocity.y = -15;        
+        this.velocity.y = -20;        
       } else if ('S' in keysdown){
-        this.scrunched = true;
+        this.ducking = true;
         this.velocity.x = -2
         this.velocity.y = 0;
       } else {
@@ -83,9 +86,9 @@ Player.prototype.input = function(keysdown){
     if (!this.jumping){
       this.jumping = true;
       if ('W' in keysdown){
-        this.velocity.y = -15;        
+        this.velocity.y = -20;        
       } else if ('S' in keysdown){
-        this.scrunched = true;
+        this.ducking = true;
         this.velocity.x = 2
         this.velocity.y = 0;
       } else {
@@ -97,11 +100,11 @@ Player.prototype.input = function(keysdown){
   if ('W' in keysdown){
     if (!this.jumping){
       this.jumping = true;
-      this.velocity.y = -15;
+      this.velocity.y = -20;
     }
   }
 
   if ('S' in keysdown){
-    this.scrunched = true;
+    this.ducking = true;
   }
 };

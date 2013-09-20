@@ -19,3 +19,7 @@ function Potato(options){
 
   this.color = options.color;
 }
+
+Potato.prototype.renderUI = function(){
+  
+}
