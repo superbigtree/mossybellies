@@ -70,7 +70,7 @@ Bullet.prototype.boundaries = function(){
     this.remove();
   }
 };
-},{"crtrdg-entity":11,"inherits":21}],2:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":22}],2:[function(require,module,exports){
 /*
 *
 * Camera
@@ -278,8 +278,10 @@ Enemy.prototype.blowUp = function(){
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-},{"crtrdg-entity":11,"inherits":21,"random-color":22}],4:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":22,"random-color":23}],4:[function(require,module,exports){
+var elementClass = require('element-class');
 var randomColor = require('random-color');
+var tic = require('tic')();
 
 var Game = require('crtrdg-gameloop');
 var Keyboard = require('crtrdg-keyboard');
@@ -326,6 +328,7 @@ game.win = function(){
 */
 
 game.on('update', function(interval){
+  tic.tick(interval);
   camera.update();
 });
 
@@ -343,6 +346,7 @@ game.on('resume', function(){
 
 game.on('tick', function(ticks){
   game.currentScene.emit('tick', ticks);
+  console.log(player)
 });
 
 
@@ -368,8 +372,7 @@ var levels = new Levels(game);
 var ticks = 0;
 var tickStarted = false;
 function tick(){
-   setTimeout(function(){
-
+  tic.timeout(function() {
     if (!game.paused){
       ticks++;
 
@@ -378,11 +381,9 @@ function tick(){
       player.tick();
     }
 
-    tick();
-
+    tick();  
   }, 10000);
 }
-
 
 /*
 *
@@ -395,7 +396,7 @@ var keysdown = keyboard.keysdown;
 
 keyboard.on('keydown', function(key){
   if (key === 'S'){
-    if (!player.scrunched){
+    if (!player.ducking){
       player.velocity.y = -5;
     }
   }
@@ -414,7 +415,7 @@ keyboard.on('keydown', function(key){
 
 keyboard.on('keyup', function(key){
   if (key === 'S'){
-    player.scrunched = false;
+    player.ducking = false;
     player.velocity.y = -5;
   }
 });
@@ -430,7 +431,7 @@ var mouse = new Mouse(game);
 
 mouse.on('click', function(location){
 
-  if (player.scrunched){
+  if (player.ducking){
     new Shield({
       position: { 
         x: player.position.x, 
@@ -469,8 +470,8 @@ function bulletCheck(interval){
         monsters[i].remove();
         player.color = '#fff';
         player.eyeColor = '#f00';
-        gold[i].addTo(game);
-        gold[i].position.x = monsters[i].position.x;
+        golds[i].addTo(game);
+        golds[i].position.x = monsters[i].position.x;
       }
     }
   }
@@ -497,7 +498,7 @@ var player = new Player({
   friction: 0.9,
   health: 100,
   camera: camera,
-  coins: 0
+  gold: 0
 });
 
 player.addTo(game);
@@ -507,7 +508,7 @@ player.on('update', function(interval){
     player.kill();
   }
 
-  if (player.coins >= 100){
+  if (player.gold >= 100){
     game.win();
   }
 
@@ -525,7 +526,7 @@ player.on('draw', function(context){
     /* the body */
     context.fillStyle = this.color;
 
-    if(this.scrunched){
+    if(this.ducking){
       context.fillRect(this.position.x - camera.position.x-10, this.position.y - camera.position.y+30, this.size.x+20, this.size.y-30);
 
       /* the eye */
@@ -575,9 +576,9 @@ player.setHealth = function(n){
   health.update(this.health);
 }
 
-player.setCoins = function(n){
-  this.coins += n;
-  coins.update(this.coins);
+player.setgold = function(n){
+  this.gold += n;
+  gold.update(this.gold);
 }
 
 player.setStrength = function(n){
@@ -689,7 +690,7 @@ pauseMenu.on('start', function(){
 *
 */
 
-var gold = [];
+var golds = [];
 var monsters = [];
 
 var levelOne = levels.create({
@@ -730,7 +731,7 @@ levelOne.on('tick', function(ticks){
   }));
   monsters[ticks-1].addTo(game);
 
-  gold.push(new Gold({
+  golds.push(new Gold({
     name: 'gold',
     color: '#FFD700',
     camera: camera,
@@ -742,11 +743,11 @@ levelOne.on('tick', function(ticks){
 });
 
 levelOne.on('update', function(){
-  for (var i=0; i<gold.length; i++){
-    if(player.touches(gold[i])){
+  for (var i=0; i<golds.length; i++){
+    if(player.touches(golds[i])){
       log.add('you found gold!');
-      gold[i].remove();
-      player.setCoins(5);
+      golds[i].remove();
+      player.setgold(5);
     }
   }
 
@@ -793,10 +794,26 @@ var health = new Text({
   html: player.health
 });
 
-var coins = new Text({ 
-  el: '#coins', 
+var gold = new Text({ 
+  el: '#gold', 
   html: '0'
 });
+
+var potatoes = new Text({
+  el: '#potatoes',
+  html: player.potatoes
+});
+
+function buyPotato(){
+  if (player.gold >= 5){
+    player.potatoes += 1;
+    player.gold -= 5;
+    potatoes.update(player.potatoes);
+    gold.update(player.gold);
+  } else {
+    log.add('hey bud: you need more gold to buy a potato. can you handle that?')
+  }
+}
 
 /*
 var strength = new Text({
@@ -804,6 +821,24 @@ var strength = new Text({
   html: player.strength
 });
 */
+
+var buy = document.querySelector('#buy');
+
+var store = document.querySelector('#store');
+
+buy.addEventListener('click', function(e){
+  if (elementClass(store).has('hide')){
+    elementClass(store).remove('hide');
+  } else {
+    elementClass(store).add('hide');
+  }
+}, false);
+
+var potato = document.querySelector('#potato');
+
+potato.addEventListener('click', function(e){
+  buyPotato();
+}, false)
 
 var title = new Text({
   el: '#game-title',
@@ -815,7 +850,7 @@ var log = new Log({
   width: '300px',
   appendTo: 'header .container'
 });
-},{"./bullet":1,"./camera":2,"./enemy":3,"./gold":5,"./inventory":6,"./log":7,"./map":8,"./player":24,"./shield":25,"./text":26,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"random-color":22}],5:[function(require,module,exports){
+},{"./bullet":1,"./camera":2,"./enemy":3,"./gold":5,"./inventory":6,"./log":7,"./map":8,"./player":25,"./shield":26,"./text":27,"crtrdg-gameloop":14,"crtrdg-goal":16,"crtrdg-keyboard":17,"crtrdg-mouse":19,"crtrdg-scene":20,"element-class":21,"random-color":23,"tic":24}],5:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 
@@ -901,7 +936,7 @@ Gold.prototype.boundaries = function(){
     this.jumping = false;
   }
 };
-},{"crtrdg-entity":11,"inherits":21}],6:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":22}],6:[function(require,module,exports){
 var inherits = require('inherits');
 
 module.exports = Inventory;
@@ -1018,7 +1053,7 @@ Inventory.prototype.isEmpty = function isEmpty(){
   }
   return true;
 };
-},{"inherits":21}],7:[function(require,module,exports){
+},{"inherits":22}],7:[function(require,module,exports){
 module.exports = Log;
 
 function Log(options){
@@ -1099,7 +1134,7 @@ Map.prototype.generate = function(ticks){
 Map.prototype.draw = function(context, xView, yView){         
   context.drawImage(this.image, 0, 0, this.image.width, this.image.height, -xView, -yView, this.image.width, this.image.height);
 }
-},{"random-color":22}],9:[function(require,module,exports){
+},{"random-color":23}],9:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -1440,7 +1475,7 @@ Entity.prototype.setBoundingBox = function(){
   this.boundingBox = aabb([this.position.x, this.position.y], [this.size.x, this.size.y]);  
 };
 
-},{"aabb-2d":12,"events":9,"inherits":21}],12:[function(require,module,exports){
+},{"aabb-2d":12,"events":9,"inherits":22}],12:[function(require,module,exports){
 module.exports = AABB
 
 var vec2 = require('gl-matrix').vec2
@@ -4677,7 +4712,7 @@ Game.prototype.draw = function(){
   this.context.fillRect(0, 0, this.width, this.height);
   this.emit('draw', this.context)
 };
-},{"events":9,"inherits":21,"raf":15}],15:[function(require,module,exports){
+},{"events":9,"inherits":22,"raf":15}],15:[function(require,module,exports){
 module.exports = raf
 
 var EE = require('events').EventEmitter
@@ -4804,7 +4839,7 @@ inherits(Goal, EventEmitter);
 function Goal(settings){
   this.name = settings.name;
 }
-},{"events":9,"inherits":21}],17:[function(require,module,exports){
+},{"events":9,"inherits":22}],17:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 var inherits = require('inherits');
 var vkey = require('vkey');
@@ -4835,7 +4870,7 @@ Keyboard.prototype.initializeListeners = function(){
     delete self.keysDown[vkey[e.keyCode]];
   }, false);
 };
-},{"events":9,"inherits":21,"vkey":18}],18:[function(require,module,exports){
+},{"events":9,"inherits":22,"vkey":18}],18:[function(require,module,exports){
 var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
   , isOSX = /OS X/.test(ua)
   , isOpera = /Opera/.test(ua)
@@ -5027,7 +5062,7 @@ Mouse.prototype.calculateOffset = function(e, callback){
   callback(location);
 }
 
-},{"events":9,"inherits":21}],20:[function(require,module,exports){
+},{"events":9,"inherits":22}],20:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 var inherits = require('inherits');
 
@@ -5098,7 +5133,51 @@ Scene.prototype.draw = function(context){
   this.emit('draw', context);
 };
 
-},{"events":9,"inherits":21}],21:[function(require,module,exports){
+},{"events":9,"inherits":22}],21:[function(require,module,exports){
+module.exports = function(opts) {
+  return new ElementClass(opts)
+}
+
+function ElementClass(opts) {
+  if (!(this instanceof ElementClass)) return new ElementClass(opts)
+  var self = this
+  if (!opts) opts = {}
+  if (opts instanceof HTMLElement) opts = {el: opts}
+  this.opts = opts
+  this.el = opts.el || document.body
+  if (typeof this.el !== 'object') this.el = document.querySelector(this.el)
+}
+
+ElementClass.prototype.add = function(className) {
+  var el = this.el
+  if (!el) return
+  if (el.className === "") return el.className = className
+  var classes = el.className.split(' ')
+  if (classes.indexOf(className) > -1) return classes
+  classes.push(className)
+  el.className = classes.join(' ')
+  return classes
+}
+
+ElementClass.prototype.remove = function(className) {
+  var el = this.el
+  if (!el) return
+  if (el.className === "") return
+  var classes = el.className.split(' ')
+  var idx = classes.indexOf(className)
+  if (idx > -1) classes.splice(idx, 1)
+  el.className = classes.join(' ')
+  return classes
+}
+
+ElementClass.prototype.has = function(className) {
+  var el = this.el
+  if (!el) return
+  var classes = el.className.split(' ')
+  return classes.indexOf(className) > -1
+}
+
+},{}],22:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -5123,7 +5202,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 module.exports = color;
 
 function num(cap){
@@ -5135,7 +5214,7 @@ function color(cap){
   return 'rgb(' + num(cap) + ', ' + num(cap) + ', ' + num(cap) + ')';
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /*
  * tic
  * https://github.com/shama/tic
@@ -5182,14 +5261,15 @@ Tic.prototype.tick = function(dt) {
   });
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 
 module.exports = Player;
-inherits(Player, Entity);
 
 function Player(options){
+  Entity.call(this);
+
   this.position = { 
     x: options.position.x, 
     y: options.position.y 
@@ -5208,16 +5288,19 @@ function Player(options){
   this.camera = options.camera;
 
   this.health = options.health;
-  this.coins = 0;
+  this.gold = 0;
+  this.potatoes = 0;
   this.strength = 5;
+  
   this.direction = 'right';
-  this.scrunched = false;
+  this.ducking = false;
   
   this.friction = options.friction;
   this.speed = options.speed;
   this.color = options.color;
   this.eyeColor = options.eyeColor;
 }
+inherits(Player, Entity);
 
 Player.prototype.move = function(){
   this.position.x += this.velocity.x * this.friction;
@@ -5244,16 +5327,15 @@ Player.prototype.boundaries = function(){
 };
 
 Player.prototype.input = function(keysdown){
-
   if ('A' in keysdown){
     this.direction = 'left';
     this.velocity.x = -this.speed;
     if (!this.jumping){
       this.jumping = true;
       if ('W' in keysdown){
-        this.velocity.y = -15;        
+        this.velocity.y = -20;        
       } else if ('S' in keysdown){
-        this.scrunched = true;
+        this.ducking = true;
         this.velocity.x = -2
         this.velocity.y = 0;
       } else {
@@ -5268,9 +5350,9 @@ Player.prototype.input = function(keysdown){
     if (!this.jumping){
       this.jumping = true;
       if ('W' in keysdown){
-        this.velocity.y = -15;        
+        this.velocity.y = -20;        
       } else if ('S' in keysdown){
-        this.scrunched = true;
+        this.ducking = true;
         this.velocity.x = 2
         this.velocity.y = 0;
       } else {
@@ -5282,15 +5364,15 @@ Player.prototype.input = function(keysdown){
   if ('W' in keysdown){
     if (!this.jumping){
       this.jumping = true;
-      this.velocity.y = -15;
+      this.velocity.y = -20;
     }
   }
 
   if ('S' in keysdown){
-    this.scrunched = true;
+    this.ducking = true;
   }
 };
-},{"crtrdg-entity":11,"inherits":21}],25:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":22}],26:[function(require,module,exports){
 var inherits = require('inherits');
 var Entity = require('crtrdg-entity');
 var randomColor = require('random-color');
@@ -5329,7 +5411,7 @@ function Shield(options){
     this.position.y += this.velocity.y + randomInt(-3, 3) * this.friction;
     this.boundaries();
 
-    if (this.touches(this.player) && this.player.scrunched){
+    if (this.touches(this.player) && this.player.ducking){
       this.player.defending = true;
     } else {
       this.player.defending = false;
@@ -5380,7 +5462,7 @@ function randomInt(min, max){
 
   return Math.floor(num)
 }
-},{"crtrdg-entity":11,"inherits":21,"random-color":22,"tic":23}],26:[function(require,module,exports){
+},{"crtrdg-entity":11,"inherits":22,"random-color":23,"tic":24}],27:[function(require,module,exports){
 /* 
 *
 * TEXT UTILITIES
