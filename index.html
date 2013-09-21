@@ -12,11 +12,13 @@
   <div class="container">
 
     <div id="store-wrapper">
-      <div id="buy">buy items</a></div>
+      <div id="buy" class="faded">buy items</a></div>
 
       <div id="store" class="hide">
         <ul>
-          <li id="potato">potato</li>
+          <li id="potato">
+            potato
+            <span class="cost faded">costs 5 gold</span></li>
         </ul>
       </div>
     </div>
@@ -42,6 +44,7 @@
       <div class="potato ui wrapper">
         <span class="label">potatoes:</span> 
         <span id="potatoes" class="value"></span>
+        <span class="action faded">eat</span>
       </div>
     </div>
 
@@ -56,7 +59,6 @@
   <div class="container">
     <p>
       press the space bar to play. wasd keys. aim/shoot with the mouse. get 100 gold to win. 
-      <a href="https://github.com/sethvincent/ludum-dare-27">code on github</a>.
     </p>
     <h2 id="game-title" class="ui"></h2>
   </div>

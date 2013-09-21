@@ -69,7 +69,7 @@ Shield.prototype.boundaries = function(){
     this.position.x = 3000 - this.size.x;
   }
 
-  if (this.position.y <= 150){
+  if (this.position.y <= 0){
     this.remove();
   }
 

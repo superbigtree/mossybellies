@@ -101,20 +101,20 @@ Rectangle.prototype.set = function(left, top, width, height){
   this.bottom = this.top + this.height;
 }
 
-Rectangle.prototype.within = function(r) {
+Rectangle.prototype.within = function(rectangle) {
   return (
-    r.left <= this.left && 
-    r.right >= this.right &&
-    r.top <= this.top && 
-    r.bottom >= this.bottom
+    rectangle.left <= this.left && 
+    rectangle.right >= this.right &&
+    rectangle.top <= this.top && 
+    rectangle.bottom >= this.bottom
   );
 }   
 
-Rectangle.prototype.overlaps = function(r) {
+Rectangle.prototype.overlaps = function(rectangle) {
   return (
-    this.left < r.right && 
-    this.right > r.left && 
-    this.top < r.bottom &&
-    this.bottom > r.top
+    this.left < rectangle.right && 
+    this.right > rectangle.left && 
+    this.top < rectangle.bottom &&
+    this.bottom > rectangle.top
   );
 }

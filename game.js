@@ -57,15 +57,25 @@ game.on('draw', function(context){
 
 game.on('pause', function(){
   game.paused = true;
+  console.log('paused')
 });
 
 game.on('resume', function(){
   game.paused = false;
+  console.log('resumed')
 });
 
 game.on('tick', function(ticks){
   game.currentScene.emit('tick', ticks);
   console.log(player)
+});
+
+window.addEventListener('blur', function(e){
+  game.emit('pause');
+});
+
+window.addEventListener('focus', function(e){
+  game.emit('resume');
 });
 
 
@@ -81,17 +91,14 @@ var levels = new Levels(game);
 
 /*
 *
-* yes, this is for the 10 seconds theme.
-* i mean, there'll be more to it than this.
-* but it would be sorta funny if this is all i did
-* that related to the theme.
+* do stuff every 10 seconds
 *
 */
 
 var ticks = 0;
 var tickStarted = false;
 function tick(){
-  tic.timeout(function() {
+  tic.interval(function() {
     if (!game.paused){
       ticks++;
 
@@ -100,7 +107,6 @@ function tick(){
       player.tick();
     }
 
-    tick();  
   }, 10000);
 }
 
@@ -126,7 +132,7 @@ keyboard.on('keydown', function(key){
       //game.resume();      
     }
 
-    if (game.currentScene.name === 'game over'){
+    if (game.currentScene.name === 'game over' || game.currentScene.name === 'game win'){
       location.reload();
     }
   }
@@ -277,15 +283,11 @@ player.on('draw', function(context){
 });
 
 player.tick = function(){
-  if (this.health > 0){
-    this.setHealth(5);
-  }
-
-  if (this.health <= 0){
+  if (player.health <= 0){
     player.kill();
   }
 
-  if (this.health < 4 && this.health > 0){
+  if (player.health < 20 && player.health > 0){
     log.add('oh, gosh. your health is getting kinda low.')
   }
 };
@@ -295,7 +297,7 @@ player.setHealth = function(n){
   health.update(this.health);
 }
 
-player.setgold = function(n){
+player.setGold = function(n){
   this.gold += n;
   gold.update(this.gold);
 }
@@ -305,11 +307,15 @@ player.setStrength = function(n){
   strength.update(this.strength);
 }
 
+player.setPotatoes = function(n){
+  this.potatoes += n;
+  potatoes.update(this.potatoes);
+}
+
 player.kill = function(){
   player.remove();
   game.over();
 }
-
 
 /*
 *
@@ -466,7 +472,7 @@ levelOne.on('update', function(){
     if(player.touches(golds[i])){
       log.add('you found gold!');
       golds[i].remove();
-      player.setgold(5);
+      player.setGold(5);
     }
   }
 
@@ -520,19 +526,30 @@ var gold = new Text({
 
 var potatoes = new Text({
   el: '#potatoes',
-  html: player.potatoes
+  html: '0'
 });
 
 function buyPotato(){
   if (player.gold >= 5){
-    player.potatoes += 1;
-    player.gold -= 5;
-    potatoes.update(player.potatoes);
-    gold.update(player.gold);
+    player.setPotatoes(1);
+    player.setGold(-5);
+    log.add('yay! potato time.')
   } else {
     log.add('hey bud: you need more gold to buy a potato. can you handle that?')
   }
 }
+
+var potatoAction = document.querySelector('.potato .action');
+
+potatoAction.addEventListener('click', function(e){
+  if (player.potatoes > 0){
+    player.setPotatoes(-1);
+    player.setHealth(5);
+    log.add('oh, yum. taste that root.')
+  } else {
+    log.add('seriously? you have zero potatoes. <br>buy some first, fool.')
+  }
+});
 
 /*
 var strength = new Text({
@@ -557,7 +574,7 @@ var potato = document.querySelector('#potato');
 
 potato.addEventListener('click', function(e){
   buyPotato();
-}, false)
+}, false);
 
 var title = new Text({
   el: '#game-title',

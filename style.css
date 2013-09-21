@@ -130,17 +130,24 @@ header .ui .value {
   color: #999;
 }
 
+.faded:hover {
+  color: #444;
+}
+
+.action {
+  cursor: pointer;
+}
+
 #store-wrapper {
   float: right;
 }
 
 #buy {
   cursor: pointer;
+  text-align: right;
 }
 
 #store {
-  position: fixed;
-  z-index: 10000;
   background-color: #fff;
   padding: 10px 0px;
 }
