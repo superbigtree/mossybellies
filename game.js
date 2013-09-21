@@ -449,7 +449,6 @@ levelOne.on('start', function(){
 });
 
 levelOne.on('tick', function(ticks){
-  console.log(ticks)
   monsters.push(new Enemy({
     camera: camera,
     color: '#fe123d'

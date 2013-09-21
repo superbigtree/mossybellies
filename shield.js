@@ -40,10 +40,8 @@ function Shield(options){
 
     if (this.touches(this.player) && this.player.ducking){
       this.player.defending = true;
-      console.log(true)
     } else {
       this.player.defending = false;
-      console.log(false)
     }
 
     tic.timeout(function() {
