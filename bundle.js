@@ -730,7 +730,6 @@ levelOne.on('start', function(){
 });
 
 levelOne.on('tick', function(ticks){
-  console.log(ticks)
   monsters.push(new Enemy({
     camera: camera,
     color: '#fe123d'
@@ -1129,14 +1128,12 @@ Map.prototype.generate = function(ticks){
 
   for (var x = 0, i = 0; i < rows; x+=16, i++) {
     for (var y = 0, j=0; j < columns; y+=16, j++) { 
-      ctx.save();
       ctx.beginPath();      
       ctx.fillStyle = randomColor(155);                
       ctx.rect(x, y, 15, 15);
       ctx.translate(.1 * ticks * 0.1, .1 * ticks * 0.1);  
       ctx.fill();
       ctx.closePath();
-      ctx.restore();
     }
     
   }   
@@ -5434,10 +5431,8 @@ function Shield(options){
 
     if (this.touches(this.player) && this.player.ducking){
       this.player.defending = true;
-      console.log(true)
     } else {
       this.player.defending = false;
-      console.log(false)
     }
 
     tic.timeout(function() {
