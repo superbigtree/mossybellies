@@ -1129,12 +1129,14 @@ Map.prototype.generate = function(ticks){
 
   for (var x = 0, i = 0; i < rows; x+=16, i++) {
     for (var y = 0, j=0; j < columns; y+=16, j++) { 
+      ctx.save();
       ctx.beginPath();      
       ctx.fillStyle = randomColor(155);                
       ctx.rect(x, y, 15, 15);
       ctx.translate(.1 * ticks * 0.1, .1 * ticks * 0.1);  
       ctx.fill();
       ctx.closePath();
+      ctx.restore();
     }
     
   }   
@@ -5406,14 +5408,14 @@ function Shield(options){
   };
 
   this.position = { 
-    x: options.position.x - 12, 
-    y: options.position.y 
+    x: options.position.x, 
+    y: options.position.y
   };
 
   this.velocity = {
     x: 0,
     y: 5
-  }
+  };
 
   this.camera = options.camera;
   this.player = options.player;
@@ -5422,16 +5424,20 @@ function Shield(options){
   this.color = randomColor(255);
 
   this.on('update', function(interval){
-    this.size.x += randomInt(-3, 5);
-    this.size.y += randomInt(-3, 5);
-    this.position.x += this.velocity.x + randomInt(-3, 3) * this.friction;
+    this.size.x += randomInt(-3, 8);
+    this.size.y += randomInt(-3, 10);
+
+    this.position.x += this.velocity.x + randomInt(-6, 3) * this.friction;
     this.position.y += this.velocity.y + randomInt(-3, 3) * this.friction;
+
     this.boundaries();
 
     if (this.touches(this.player) && this.player.ducking){
       this.player.defending = true;
+      console.log(true)
     } else {
       this.player.defending = false;
+      console.log(false)
     }
 
     tic.timeout(function() {
@@ -5442,11 +5448,19 @@ function Shield(options){
   });
 
   this.on('draw', function(context){
+    context.save();
     context.beginPath();
-    context.rect(this.position.x - this.camera.position.x, this.position.y - this.camera.position.y, this.size.x, this.size.y);
-    context.lineWidth = randomInt(1, 5);
+
+    context.translate(this.position.x - this.camera.position.x + this.size.x / 2 - 12, this.position.y + 30 - this.camera.position.y); 
+    context.rotate(Math.PI/180 * randomInt(-30, 30));
+
+    context.rect(0 - this.size.x/2,0 - this.size.y/2, this.size.x, this.size.y);
+    context.lineWidth = randomInt(-3, 15);
     context.strokeStyle = this.color;
     context.stroke();
+
+    context.closePath();
+    context.restore();
   });
 
   return this;
